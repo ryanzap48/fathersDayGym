@@ -22,6 +22,9 @@ Recharts**, ready to deploy on **Vercel**.
   inline **"last time"** performance for progressive overload. Optimistic UI.
 - **Body weight** — daily check-ins charted with a **7-day moving average**,
   goal tracking, and weekly/total change.
+- **TDEE calculator** — estimates daily calorie burn (Mifflin–St Jeor BMR ×
+  activity), with cut/maintain/lean-bulk targets and a protein range; pre-fills
+  from your profile and latest body weight.
 - **Goals** — target a body weight, an estimated 1RM on a lift, weekly training
   frequency, or weekly volume; progress is computed against your real data.
 - **Analytics** — strength progression (Epley est. 1RM + top set), volume per

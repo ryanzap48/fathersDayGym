@@ -9,6 +9,7 @@ const LINKS = [
   ["/exercises", "Exercises"],
   ["/analytics", "Analytics"],
   ["/bodyweight", "Body weight"],
+  ["/tdee", "TDEE"],
   ["/goals", "Goals"],
   ["/settings", "Settings"],
 ] as const;
