@@ -13,6 +13,7 @@ import { LineChart } from "@/components/charts/LineChart";
 import { BarChart } from "@/components/charts/BarChart";
 import { Heatmap } from "@/components/charts/Heatmap";
 import { AnalyticsStrength, type StrengthSeries } from "@/components/AnalyticsStrength";
+import { ShareButton } from "@/components/ShareButton";
 import { num, weight as fmtWeight, shortDate, MUSCLE_LABELS } from "@/lib/utils/format";
 
 export const metadata = { title: "Analytics" };
@@ -142,11 +143,26 @@ export default async function AnalyticsPage() {
                     {pr.kind === "best_e1rm" ? "Best est. 1RM" : pr.kind === "heaviest" ? "Heaviest" : "Most reps"}
                   </span>
                 </div>
-                <div className="tnum text-right">
+                <div className="tnum flex items-baseline gap-3 text-right">
                   <span className="font-semibold text-accent">
                     {pr.kind === "most_reps" ? `${pr.reps} reps` : fmtWeight(Math.round(pr.value * 10) / 10, units)}
                   </span>
-                  <span className="ml-3 text-sm text-muted">{shortDate(pr.date)}</span>
+                  <span className="text-sm text-muted">{shortDate(pr.date)}</span>
+                  <ShareButton
+                    exercise={pr.exerciseName}
+                    label={
+                      pr.kind === "best_e1rm"
+                        ? "Best est. 1RM"
+                        : pr.kind === "heaviest"
+                          ? "Heaviest"
+                          : "Most reps"
+                    }
+                    value={
+                      pr.kind === "most_reps"
+                        ? `${pr.reps} reps`
+                        : `${num(Math.round(pr.value * 10) / 10)} ${units}`
+                    }
+                  />
                 </div>
               </li>
             ))}

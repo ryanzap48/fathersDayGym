@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { GoalType } from "@/lib/database.types";
@@ -16,6 +16,7 @@ export interface GoalView {
   unit: string;
   targetDate: string | null;
   achieved: boolean;
+  achievedAt: string | null;
 }
 
 const TYPE_LABEL: Record<GoalType, string> = {
@@ -37,6 +38,30 @@ export function GoalsManager({
   const supabase = createClient();
   const router = useRouter();
   const [adding, setAdding] = useState(false);
+  const [celebrate, setCelebrate] = useState<string | null>(null);
+
+  // Stamp achieved_at the first time a goal is met, and celebrate it once.
+  const stamped = useRef(false);
+  useEffect(() => {
+    if (stamped.current) return;
+    stamped.current = true;
+    const newlyAchieved = goals.filter((g) => g.achieved && !g.achievedAt);
+    if (newlyAchieved.length === 0) return;
+    (async () => {
+      const now = new Date().toISOString();
+      await Promise.all(
+        newlyAchieved.map((g) =>
+          supabase.from("goals").update({ achieved_at: now }).eq("id", g.id),
+        ),
+      );
+      setCelebrate(
+        newlyAchieved.length === 1
+          ? `Goal achieved — ${newlyAchieved[0].title}!`
+          : `${newlyAchieved.length} goals achieved!`,
+      );
+      router.refresh();
+    })();
+  }, [goals, supabase, router]);
 
   // Add-form state
   const [type, setType] = useState<GoalType>("one_rep_max");
@@ -72,6 +97,12 @@ export function GoalsManager({
 
   return (
     <div className="space-y-10">
+      {celebrate && (
+        <div className="rounded bg-accent px-4 py-3 text-sm font-medium text-white">
+          🎉 {celebrate}
+        </div>
+      )}
+
       <div className="flex justify-end">
         <button onClick={() => setAdding((a) => !a)} className="btn btn-ghost text-sm text-accent">
           {adding ? "Cancel" : "+ New goal"}

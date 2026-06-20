@@ -33,6 +33,7 @@ const KEY = "lift-write-queue";
 let queue: QueueOp[] = [];
 let online = typeof navigator !== "undefined" ? navigator.onLine : true;
 let syncing = false;
+let failed = 0; // ops the server rejected and we had to drop
 const listeners = new Set<() => void>();
 
 function load() {
@@ -62,8 +63,19 @@ async function processQueue() {
   syncing = true;
   emit();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = createClient() as any;
+  // Generic write surface — table names are dynamic so we bypass the strict
+  // per-table typing here (payloads are validated by the DB and RLS).
+  const sb = createClient() as unknown as {
+    from: (t: string) => {
+      insert: (v: unknown) => Promise<{ error: { message: string } | null }>;
+      update: (v: unknown) => {
+        eq: (c: string, val: string) => Promise<{ error: { message: string } | null }>;
+      };
+      delete: () => {
+        eq: (c: string, val: string) => Promise<{ error: { message: string } | null }>;
+      };
+    };
+  };
 
   while (queue.length) {
     const op = queue[0];
@@ -79,7 +91,9 @@ async function processQueue() {
 
       if (error) {
         if (isNetworkError(error.message)) break; // retry later, keep op
-        // Server rejected (e.g. constraint) — drop so the queue can drain.
+        // Server rejected (e.g. constraint) — drop so the queue can drain,
+        // but record it so the UI can warn the user something didn't save.
+        failed += 1;
         if (process.env.NODE_ENV !== "production") {
           console.warn("[sync] dropping op", op, error.message);
         }
@@ -123,6 +137,12 @@ export function flushQueue() {
   return processQueue();
 }
 
+/** Acknowledge and clear the failed-write warning. */
+export function clearFailed() {
+  failed = 0;
+  emit();
+}
+
 if (typeof window !== "undefined") {
   load();
   window.addEventListener("online", () => {
@@ -150,5 +170,5 @@ export function useSyncStatus() {
       listeners.delete(l);
     };
   }, []);
-  return { pending: queue.length, syncing, online };
+  return { pending: queue.length, syncing, online, failed };
 }

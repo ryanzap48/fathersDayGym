@@ -50,6 +50,34 @@ export function calculatePlates(
   };
 }
 
+/**
+ * Suggest warm-up sets ramping toward a working weight. Returns ascending
+ * { weight, reps } pairs rounded to the nearest loadable increment.
+ * Classic ramp: ~40% / 60% / 80% of the working weight for a few reps.
+ */
+export function warmupSets(
+  workingWeight: number,
+  units: UnitsPref,
+): { weight: number; reps: number }[] {
+  if (!workingWeight || workingWeight <= 0) return [];
+  const step = units === "kg" ? 2.5 : 5;
+  const round = (w: number) => Math.max(0, Math.round(w / step) * step);
+  const ramp = [
+    { pct: 0.4, reps: 8 },
+    { pct: 0.6, reps: 5 },
+    { pct: 0.8, reps: 3 },
+  ];
+  const out: { weight: number; reps: number }[] = [];
+  for (const r of ramp) {
+    const weight = round(workingWeight * r.pct);
+    // Skip a step that rounds to the same (or heavier) than the working set.
+    if (weight > 0 && weight < workingWeight && (out.length === 0 || weight > out[out.length - 1].weight)) {
+      out.push({ weight, reps: r.reps });
+    }
+  }
+  return out;
+}
+
 /** Collapse the per-side list into `{ plate, count }` pairs for display. */
 export function groupPlates(perSide: number[]): { plate: number; count: number }[] {
   const map = new Map<number, number>();

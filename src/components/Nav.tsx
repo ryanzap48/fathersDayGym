@@ -10,9 +10,11 @@ const PRIMARY = [
   ["/exercises", "Exercises"],
   ["/analytics", "Analytics"],
   ["/bodyweight", "Body weight"],
-  ["/tdee", "TDEE"],
+  ["/measurements", "Measurements"],
   ["/routines", "Routines"],
   ["/goals", "Goals"],
+  ["/tdee", "TDEE"],
+  ["/one-rep-max", "1RM"],
   ["/settings", "Settings"],
 ] as const;
 
@@ -26,9 +28,11 @@ const MOBILE_TABS = [
 const MORE = [
   ["/history", "History"],
   ["/bodyweight", "Body weight"],
-  ["/tdee", "TDEE"],
+  ["/measurements", "Measurements"],
   ["/routines", "Routines"],
   ["/goals", "Goals"],
+  ["/tdee", "TDEE"],
+  ["/one-rep-max", "1RM calculator"],
   ["/settings", "Settings"],
 ] as const;
 
@@ -36,7 +40,8 @@ export function Nav({ name }: { name: string }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // Close the "More" sheet on navigation.
+  // Close the "More" sheet when the route changes.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMoreOpen(false), [pathname]);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);

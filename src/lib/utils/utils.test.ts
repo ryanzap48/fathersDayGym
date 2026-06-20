@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { estimateOneRepMax, weightForReps, bestEstimatedOneRepMax } from "./one-rep-max";
-import { calculatePlates, groupPlates } from "./plate-calculator";
+import { calculatePlates, groupPlates, warmupSets } from "./plate-calculator";
 import { movingAverage } from "./moving-average";
 import { totalVolume, totalReps, workingSetCount } from "./volume";
 import { currentStreak, weeklyCounts } from "./consistency";
@@ -58,6 +58,20 @@ describe("plate calculator", () => {
       { plate: 25, count: 1 },
       { plate: 10, count: 1 },
     ]);
+  });
+});
+
+describe("warm-up sets", () => {
+  it("ramps below the working weight in ascending order", () => {
+    const sets = warmupSets(225, "lb");
+    expect(sets.length).toBeGreaterThan(0);
+    expect(sets.every((s) => s.weight < 225)).toBe(true);
+    for (let i = 1; i < sets.length; i++) {
+      expect(sets[i].weight).toBeGreaterThan(sets[i - 1].weight);
+    }
+  });
+  it("returns nothing for non-positive input", () => {
+    expect(warmupSets(0, "lb")).toEqual([]);
   });
 });
 

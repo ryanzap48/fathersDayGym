@@ -73,6 +73,7 @@ export default async function GoalsPage() {
       unit,
       targetDate: g.target_date,
       achieved,
+      achievedAt: g.achieved_at,
     };
   });
 

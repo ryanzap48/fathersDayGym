@@ -5,6 +5,7 @@ import { thisWeekVolume } from "@/lib/utils/analytics";
 import { currentStreak, workoutsThisWeek } from "@/lib/utils/consistency";
 import { recentRecords } from "@/lib/utils/personal-records";
 import { PageHeader, Stat, SectionTitle, EmptyState } from "@/components/ui";
+import { Onboarding } from "@/components/Onboarding";
 import { volume as fmtVolume, weight as fmtWeight, shortDate, num } from "@/lib/utils/format";
 
 export const metadata = { title: "Dashboard" };
@@ -18,10 +19,11 @@ export default async function DashboardPage() {
 
   // Recent workouts are hydrated for volume/PRs/list; streaks & counts use the
   // tiny dates-only query so the dashboard stays light on mobile data.
-  const [workouts, dates, profile] = await Promise.all([
+  const [workouts, dates, profile, { count: bwCount }] = await Promise.all([
     getWorkouts(supabase, userId, 40),
     getWorkoutDates(supabase, userId),
     getProfile(supabase, userId),
+    supabase.from("bodyweight_logs").select("id", { count: "exact", head: true }).eq("user_id", userId),
   ]);
 
   const units = profile?.units ?? "lb";
@@ -38,6 +40,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-12">
+      <Onboarding
+        name={profile?.name ?? "Athlete"}
+        hasUnits={Boolean(profile?.goal_weight)}
+        hasBodyweight={(bwCount ?? 0) > 0}
+        hasWorkout={dates.length > 0}
+      />
       <PageHeader
         title={`Hello, ${firstName}`}
         subtitle={

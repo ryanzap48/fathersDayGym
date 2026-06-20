@@ -201,6 +201,12 @@ export interface Database {
         Update: { weight?: number; logged_at?: string };
         Relationships: [];
       };
+      body_measurements: {
+        Row: { id: string; user_id: string; metric: string; value: number; logged_at: string };
+        Insert: { id?: string; user_id: string; metric: string; value: number; logged_at?: string };
+        Update: { metric?: string; value?: number; logged_at?: string };
+        Relationships: [];
+      };
       goals: {
         Row: {
           id: string;
@@ -254,4 +260,5 @@ export type Workout = Database["public"]["Tables"]["workouts"]["Row"];
 export type WorkoutExercise = Database["public"]["Tables"]["workout_exercises"]["Row"];
 export type WorkoutSet = Database["public"]["Tables"]["sets"]["Row"];
 export type BodyweightLog = Database["public"]["Tables"]["bodyweight_logs"]["Row"];
+export type BodyMeasurement = Database["public"]["Tables"]["body_measurements"]["Row"];
 export type Goal = Database["public"]["Tables"]["goals"]["Row"];

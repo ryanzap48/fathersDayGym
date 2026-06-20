@@ -58,7 +58,10 @@ export async function getWorkouts(
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as unknown as WorkoutDetail[];
+  // Exclude empty drafts (a workout with no exercises logged).
+  return ((data ?? []) as unknown as WorkoutDetail[]).filter(
+    (w) => w.workout_exercises.length > 0,
+  );
 }
 
 /** A single workout by id (RLS guarantees ownership). */
@@ -117,11 +120,14 @@ export function toSetRecords(workouts: WorkoutDetail[]): SetRecord[] {
 export async function getWorkoutDates(supabase: DB, userId: string): Promise<string[]> {
   const { data, error } = await supabase
     .from("workouts")
-    .select("started_at")
+    .select("started_at, workout_exercises(id)")
     .eq("user_id", userId)
     .order("started_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((w) => w.started_at);
+  // Only count workouts that actually have exercises (skip empty drafts).
+  return ((data ?? []) as unknown as { started_at: string; workout_exercises: unknown[] }[])
+    .filter((w) => w.workout_exercises.length > 0)
+    .map((w) => w.started_at);
 }
 
 /** Profile row for the current user, creating sensible fallbacks upstream. */

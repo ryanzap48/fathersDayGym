@@ -15,8 +15,9 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    const saved = (localStorage.getItem("theme") as Theme | null) ?? "light";
-    setTheme(saved);
+    // Hydrate from localStorage on mount (unavailable during SSR).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTheme((localStorage.getItem("theme") as Theme | null) ?? "light");
   }, []);
 
   function choose(next: Theme) {

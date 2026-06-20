@@ -27,6 +27,13 @@ Recharts**, ready to deploy on **Vercel**.
   as a **PWA** with a screen **wake lock** that keeps the display on while you lift.
 - **Routines** — save any session as a reusable template and start future
   workouts pre-loaded with the right exercises.
+- **Measurements & progress photos** — track tape measurements over time and
+  keep private progress photos (Supabase Storage).
+- **Calculators** — standalone **1RM** estimator (with a rep-max table) and a
+  **TDEE** calculator; warm-up sets auto-calculate from your working weight.
+- **Goals, onboarding, reminders, dark mode, PR sharing** — goal achievement is
+  tracked and celebrated, a first-run checklist guides new users, optional
+  training reminders fire while the app is open, and PRs share as an image card.
 - **Body weight** — daily check-ins charted with a **7-day moving average**,
   goal tracking, and weekly/total change.
 - **TDEE calculator** — estimates daily calorie burn (Mifflin–St Jeor BMR ×
@@ -53,6 +60,8 @@ At [supabase.com](https://supabase.com) create a project, then in the dashboard:
    policies, and adds a trigger that creates a `profiles` row on sign-up.
 2. Run [`supabase/seed.sql`](supabase/seed.sql) to load the global exercise
    library. (Regenerate it any time with `node supabase/generate-seed.mjs`.)
+   Then run [`supabase/migrations/0001_measurements_and_photos.sql`](supabase/migrations/0001_measurements_and_photos.sql)
+   to add the measurements table and the private progress-photos storage bucket.
 3. **Authentication → Providers** → make sure **Email** is enabled (it is by
    default). Under **Authentication → URL Configuration**, add
    `http://localhost:3000/auth/callback` and your production callback URL to the
@@ -155,6 +164,7 @@ npx supabase gen types typescript --project-id <your-id> > src/lib/database.type
 | `npm run build` | Production build |
 | `npm run start` | Run the production build |
 | `npm test` | Run the Vitest unit tests |
+| `npm run lint` | Run ESLint |
 | `node supabase/generate-seed.mjs` | Regenerate the exercise seed |
 
 > **Mobile note:** the app is mobile-first and installable. On your phone, open

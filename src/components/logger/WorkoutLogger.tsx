@@ -17,6 +17,7 @@ import { PlateCalculator } from "./PlateCalculator";
 import { ExercisePicker } from "./ExercisePicker";
 import { estimateOneRepMax } from "@/lib/utils/one-rep-max";
 import { totalVolume } from "@/lib/utils/volume";
+import { warmupSets } from "@/lib/utils/plate-calculator";
 import { num, SET_TYPE_LABELS } from "@/lib/utils/format";
 
 interface LiveSet {
@@ -58,6 +59,9 @@ export function WorkoutLogger({
   mode = "new",
   initialBlocks = [],
   prBaseline = {},
+  created = true,
+  userId,
+  routineId = null,
 }: {
   workoutId: string;
   exercises: Exercise[];
@@ -65,11 +69,24 @@ export function WorkoutLogger({
   mode?: "new" | "edit";
   initialBlocks?: InitialBlock[];
   prBaseline?: PrBaseline;
+  /** Whether the workout row already exists in the DB. */
+  created?: boolean;
+  userId?: string;
+  routineId?: string | null;
 }) {
   const supabase = createClient();
   const router = useRouter();
-  const { pending, online } = useSyncStatus();
+  const { pending, online, failed } = useSyncStatus();
   useWakeLock(true);
+
+  // The draft workout row is created lazily on the first exercise so abandoning
+  // the screen never leaves an empty workout behind.
+  const createdRef = useRef(created);
+  function ensureWorkout() {
+    if (createdRef.current) return;
+    queueInsert("workouts", { id: workoutId, user_id: userId, routine_id: routineId });
+    createdRef.current = true;
+  }
 
   const [blocks, setBlocks] = useState<Block[]>(
     initialBlocks.map((b) => ({ ...b, last: null })),
@@ -132,6 +149,7 @@ export function WorkoutLogger({
 
   async function addExercise(exercise: Exercise) {
     setPickerOpen(false);
+    ensureWorkout();
     const id = uuid();
     queueInsert("workout_exercises", {
       id,
@@ -147,6 +165,10 @@ export function WorkoutLogger({
   }
 
   function removeExercise(id: string) {
+    const block = blocks.find((b) => b.workoutExerciseId === id);
+    if (block && block.sets.length > 0 && !window.confirm(`Remove ${block.exercise.name} and its ${block.sets.length} set(s)?`)) {
+      return;
+    }
     setBlocks((bs) => bs.filter((b) => b.workoutExerciseId !== id));
     queueDelete("workout_exercises", "id", id);
   }
@@ -176,6 +198,49 @@ export function WorkoutLogger({
     });
     setRestSignal((n) => n + 1); // auto-start the rest timer
     checkPr(block.exercise, draft);
+  }
+
+  function addWarmups(block: Block) {
+    const firstWork = block.sets.find((s) => s.set_type !== "warmup");
+    let target = firstWork?.weight ?? null;
+    if (!target) {
+      const input = window.prompt(`Working weight to warm up to (${units})?`);
+      target = input ? Number(input) : null;
+    }
+    if (!target || target <= 0) return;
+
+    const warmups: LiveSet[] = warmupSets(target, units).map((w, i) => ({
+      id: uuid(),
+      set_number: i + 1,
+      weight: w.weight,
+      reps: w.reps,
+      rpe: null,
+      set_type: "warmup",
+      completed: false,
+    }));
+    if (warmups.length === 0) return;
+
+    const reordered = [...warmups, ...block.sets].map((s, i) => ({ ...s, set_number: i + 1 }));
+    setBlocks((bs) =>
+      bs.map((b) => (b.workoutExerciseId === block.workoutExerciseId ? { ...b, sets: reordered } : b)),
+    );
+    // Insert the new warm-ups; renumber any existing sets that shifted.
+    warmups.forEach((w) => {
+      const finalNumber = reordered.find((s) => s.id === w.id)!.set_number;
+      queueInsert("sets", {
+        id: w.id,
+        workout_exercise_id: block.workoutExerciseId,
+        set_number: finalNumber,
+        weight: w.weight,
+        reps: w.reps,
+        set_type: "warmup",
+        completed: false,
+      });
+    });
+    block.sets.forEach((s) => {
+      const finalNumber = reordered.find((r) => r.id === s.id)!.set_number;
+      if (finalNumber !== s.set_number) queueUpdate("sets", "id", s.id, { set_number: finalNumber });
+    });
   }
 
   function updateSet(blockId: string, setId: string, patch: Partial<LiveSet>) {
@@ -214,6 +279,11 @@ export function WorkoutLogger({
 
   function finish() {
     startFinish(async () => {
+      // Nothing was logged — no workout row was ever created.
+      if (!createdRef.current) {
+        router.replace("/dashboard");
+        return;
+      }
       if (mode === "new") queueUpdate("workouts", "id", workoutId, { ended_at: new Date().toISOString() });
       await flushQueue();
       router.replace(`/workout/${workoutId}`);
@@ -222,7 +292,7 @@ export function WorkoutLogger({
   }
 
   function discard() {
-    queueDelete("workouts", "id", workoutId);
+    if (createdRef.current) queueDelete("workouts", "id", workoutId);
     router.replace("/dashboard");
     router.refresh();
   }
@@ -263,7 +333,7 @@ export function WorkoutLogger({
           </h1>
           <p className="tnum mt-1 text-sm text-muted">
             {blocks.length} exercises · {totalSets} working sets · {num(Math.round(totalVol))} {units}
-            <SyncPill pending={pending} online={online} />
+            <SyncPill pending={pending} online={online} failed={failed} />
           </p>
         </div>
         <button onClick={saveAsRoutine} className="btn btn-ghost text-sm text-muted">
@@ -285,6 +355,7 @@ export function WorkoutLogger({
           block={block}
           units={units}
           onAddSet={() => addSet(block)}
+          onAddWarmups={() => addWarmups(block)}
           onUpdateSet={(setId, patch) => updateSet(block.workoutExerciseId, setId, patch)}
           onPersistSet={persistSet}
           onRemoveSet={(setId) => removeSet(block.workoutExerciseId, setId)}
@@ -345,7 +416,16 @@ export function WorkoutLogger({
   );
 }
 
-function SyncPill({ pending, online }: { pending: number; online: boolean }) {
+function SyncPill({
+  pending,
+  online,
+  failed,
+}: {
+  pending: number;
+  online: boolean;
+  failed: number;
+}) {
+  if (failed > 0) return <span className="ml-2 text-bad">⚠ {failed} change(s) failed to save</span>;
   if (!online) return <span className="ml-2 text-bad">offline · {pending} queued</span>;
   if (pending > 0) return <span className="ml-2 text-faint">saving {pending}…</span>;
   return <span className="ml-2 text-faint">saved</span>;
@@ -355,6 +435,7 @@ function ExerciseBlock({
   block,
   units,
   onAddSet,
+  onAddWarmups,
   onUpdateSet,
   onPersistSet,
   onRemoveSet,
@@ -367,6 +448,7 @@ function ExerciseBlock({
   block: Block;
   units: UnitsPref;
   onAddSet: () => void;
+  onAddWarmups: () => void;
   onUpdateSet: (setId: string, patch: Partial<LiveSet>) => void;
   onPersistSet: (setId: string, patch: Partial<Omit<LiveSet, "id">>) => void;
   onRemoveSet: (setId: string) => void;
@@ -381,6 +463,13 @@ function ExerciseBlock({
     (m, s) => Math.max(m, estimateOneRepMax(s.weight ?? 0, s.reps ?? 0)),
     0,
   );
+  // Working sets are numbered independently of warm-ups (which show "W").
+  const labels = new Map<string, string>();
+  let workingCount = 0;
+  for (const s of block.sets) {
+    labels.set(s.id, s.set_type === "warmup" ? "W" : String(++workingCount));
+  }
+  const hasWarmup = block.sets.some((s) => s.set_type === "warmup");
 
   return (
     <section>
@@ -428,7 +517,7 @@ function ExerciseBlock({
             <span
               className={`tnum text-sm ${s.set_type === "warmup" ? "text-faint" : "text-muted"}`}
             >
-              {s.set_type === "warmup" ? "W" : s.set_number}
+              {labels.get(s.id)}
             </span>
             <input
               type="number"
@@ -500,10 +589,18 @@ function ExerciseBlock({
           </div>
         ))}
 
-        <div className="mt-2 flex items-center gap-6">
+        <div className="mt-2 flex flex-wrap items-center gap-6">
           <button onClick={onAddSet} className="min-h-[2.5rem] text-sm text-accent hover:opacity-80">
             + Add set
           </button>
+          {trackingWeight && !hasWarmup && (
+            <button
+              onClick={onAddWarmups}
+              className="min-h-[2.5rem] text-sm text-muted hover:text-foreground"
+            >
+              + Warm-ups
+            </button>
+          )}
           {block.sets.length > 0 && (
             <button
               onClick={() => onRemoveSet(block.sets[block.sets.length - 1].id)}

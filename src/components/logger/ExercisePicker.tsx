@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Exercise } from "@/lib/database.types";
 import { MUSCLE_LABELS } from "@/lib/utils/format";
 
@@ -17,6 +17,23 @@ export function ExercisePicker({
 }) {
   const [q, setQ] = useState("");
   const [muscle, setMuscle] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Close on Escape, lock background scroll, and restore focus on unmount.
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      opener?.focus?.();
+    };
+  }, [onClose]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -27,10 +44,18 @@ export function ExercisePicker({
   }, [exercises, q, muscle]);
 
   return (
-    <div className="fixed inset-0 z-30 flex flex-col bg-background">
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="exercise-picker-title"
+      className="fixed inset-0 z-50 flex flex-col bg-background"
+    >
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6 sm:px-6">
         <div className="flex items-center justify-between pb-4">
-          <h2 className="text-lg font-semibold">Add exercise</h2>
+          <h2 id="exercise-picker-title" className="text-lg font-semibold">
+            Add exercise
+          </h2>
           <button onClick={onClose} className="btn-ghost text-sm text-muted">
             Close
           </button>
