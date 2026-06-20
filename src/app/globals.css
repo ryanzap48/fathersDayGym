@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+/*
+  Design system: minimalist, typographic, no-card.
+  Near-monochrome palette on off-white. One restrained accent.
+  Numbers are heroes — exposed via a mono family.
+*/
+
+:root {
+  --background: #fcfcfb;
+  --foreground: #18181b;
+  --muted: #71717a;
+  --faint: #a1a1aa;
+  --divider: #e8e8e4;
+  --accent: #e2502c;
+  --accent-weak: #fbe9e3;
+  --good: #2f7d54;
+  --bad: #c0392b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-divider: var(--divider);
+  --color-accent: var(--accent);
+  --color-accent-weak: var(--accent-weak);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+* {
+  border-color: var(--divider);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+}
+
+/* Tabular figures everywhere numbers matter */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Thin, muted divider helper */
+.divider {
+  border: 0;
+  border-top: 1px solid var(--divider);
+}
+
+/* Minimal focus ring — keyboard accessible, not boxy */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+/* Inputs: underline style, no boxes */
+.field {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  padding: 0.4rem 0;
+  width: 100%;
+  font-size: 1rem;
+  color: var(--foreground);
+  transition: border-color 0.15s ease;
+}
+.field:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+.field::placeholder {
+  color: var(--faint);
+}
+
+/* Numeric inputs used inline while logging — compact, centered */
+.cell-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding: 0.25rem 0;
+  width: 100%;
+}
+.cell-input:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+
+/* Buttons — typographic, no heavy chrome */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 2px;
+  transition: opacity 0.15s ease, background 0.15s ease;
+  cursor: pointer;
+}
+.btn-primary {
+  background: var(--foreground);
+  color: var(--background);
+}
+.btn-primary:hover {
+  opacity: 0.88;
+}
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-accent:hover {
+  opacity: 0.9;
+}
+.btn-ghost {
+  color: var(--muted);
+  padding-left: 0;
+  padding-right: 0;
+}
+.btn-ghost:hover {
+  color: var(--foreground);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Remove number input spinners for clean numeric entry */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
