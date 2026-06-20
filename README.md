@@ -13,8 +13,8 @@ Recharts**, ready to deploy on **Vercel**.
 
 ## Features
 
-- **Auth** — email/password and Google OAuth via Supabase Auth, with protected
-  routes enforced in `proxy.ts`.
+- **Auth** — email/password via Supabase Auth, with protected routes enforced
+  in `proxy.ts`.
 - **Exercise library** — 129 seeded global exercises across every muscle group
   and equipment type, plus user-created custom exercises.
 - **Workout logging** — start a session, add exercises, log sets (weight, reps,
@@ -43,9 +43,10 @@ At [supabase.com](https://supabase.com) create a project, then in the dashboard:
    policies, and adds a trigger that creates a `profiles` row on sign-up.
 2. Run [`supabase/seed.sql`](supabase/seed.sql) to load the global exercise
    library. (Regenerate it any time with `node supabase/generate-seed.mjs`.)
-3. **Authentication → Providers** → enable **Email** and **Google** (add your
-   Google OAuth client ID/secret). Add `http://localhost:3000/auth/callback`
-   and your production callback URL to the allowed redirect URLs.
+3. **Authentication → Providers** → make sure **Email** is enabled (it is by
+   default). Under **Authentication → URL Configuration**, add
+   `http://localhost:3000/auth/callback` and your production callback URL to the
+   allowed redirect URLs (used for email-confirmation links).
 
 ### 2. Configure environment
 

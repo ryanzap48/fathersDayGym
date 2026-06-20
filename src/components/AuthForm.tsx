@@ -55,29 +55,8 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     setPending(false);
   }
 
-  async function handleGoogle() {
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    });
-    if (error) setError(error.message);
-  }
-
   return (
     <div className="w-full">
-      <button onClick={handleGoogle} className="btn btn-primary w-full" type="button">
-        Continue with Google
-      </button>
-
-      <div className="my-6 flex items-center gap-4 text-xs uppercase tracking-wider text-faint">
-        <span className="h-px flex-1 bg-divider" />
-        or
-        <span className="h-px flex-1 bg-divider" />
-      </div>
-
       <form onSubmit={handleEmail} className="space-y-5">
         {mode === "sign-up" && (
           <div>
