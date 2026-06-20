@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getWorkouts, getProfile, toSetRecords, orderWorkout } from "@/lib/queries";
+import { getWorkouts, getWorkoutDates, getProfile, toSetRecords, orderWorkout } from "@/lib/queries";
 import { thisWeekVolume } from "@/lib/utils/analytics";
 import { currentStreak, workoutsThisWeek } from "@/lib/utils/consistency";
 import { recentRecords } from "@/lib/utils/personal-records";
@@ -16,13 +16,15 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   const userId = user!.id;
 
-  const [workouts, profile] = await Promise.all([
-    getWorkouts(supabase, userId),
+  // Recent workouts are hydrated for volume/PRs/list; streaks & counts use the
+  // tiny dates-only query so the dashboard stays light on mobile data.
+  const [workouts, dates, profile] = await Promise.all([
+    getWorkouts(supabase, userId, 40),
+    getWorkoutDates(supabase, userId),
     getProfile(supabase, userId),
   ]);
 
   const units = profile?.units ?? "lb";
-  const dates = workouts.map((w) => w.started_at);
   const streak = currentStreak(dates);
   const weekVol = thisWeekVolume(workouts);
   const weekCount = workoutsThisWeek(dates);
@@ -54,7 +56,7 @@ export default async function DashboardPage() {
         <Stat label="This week" value={fmtVolume(weekVol, units)} sub="volume" accent />
         <Stat label="Workouts" value={num(weekCount)} sub="this week" />
         <Stat label="Streak" value={`${streak}d`} sub="current" />
-        <Stat label="All time" value={num(workouts.length)} sub="workouts" />
+        <Stat label="All time" value={num(dates.length)} sub="workouts" />
       </section>
 
       <section>

@@ -18,8 +18,15 @@ Recharts**, ready to deploy on **Vercel**.
 - **Exercise library** — 129 seeded global exercises across every muscle group
   and equipment type, plus user-created custom exercises.
 - **Workout logging** — start a session, add exercises, log sets (weight, reps,
-  RPE, set type), with a built-in **rest timer**, **plate calculator**, and
-  inline **"last time"** performance for progressive overload. Optimistic UI.
+  RPE, set type), with a built-in **rest timer** (auto-starts, with sound +
+  vibration), **plate calculator** (visual), inline **"last time"** performance,
+  per-set complete toggle, and a **PR celebration** toast when you beat a record.
+  Past workouts are fully **editable**.
+- **Offline-tolerant** — writes are queued to localStorage and synced when the
+  connection returns, so a flaky gym signal never costs you a set. Installable
+  as a **PWA** with a screen **wake lock** that keeps the display on while you lift.
+- **Routines** — save any session as a reusable template and start future
+  workouts pre-loaded with the right exercises.
 - **Body weight** — daily check-ins charted with a **7-day moving average**,
   goal tracking, and weekly/total change.
 - **TDEE calculator** — estimates daily calorie burn (Mifflin–St Jeor BMR ×
@@ -147,4 +154,9 @@ npx supabase gen types typescript --project-id <your-id> > src/lib/database.type
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
 | `npm run start` | Run the production build |
+| `npm test` | Run the Vitest unit tests |
 | `node supabase/generate-seed.mjs` | Regenerate the exercise seed |
+
+> **Mobile note:** the app is mobile-first and installable. On your phone, open
+> the site in the browser and choose “Add to Home Screen” to run it full-screen
+> like a native app, complete with the dark-mode and offline support.

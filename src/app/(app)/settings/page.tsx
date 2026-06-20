@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
 import { PageHeader, SectionTitle } from "@/components/ui";
 import { SettingsForm } from "@/components/SettingsForm";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Profile } from "@/lib/database.types";
 
 export const metadata = { title: "Settings" };
@@ -21,6 +22,11 @@ export default async function SettingsPage() {
       <section>
         <SectionTitle>Profile</SectionTitle>
         {profile && <SettingsForm profile={profile} />}
+      </section>
+
+      <section>
+        <SectionTitle>Appearance</SectionTitle>
+        <ThemeToggle />
       </section>
 
       <section>

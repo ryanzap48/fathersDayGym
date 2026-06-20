@@ -49,9 +49,14 @@ export default async function WorkoutPage({
           minute: "2-digit",
         })}
         action={
-          <Link href="/history" className="btn btn-ghost text-sm">
-            ← History
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href={`/workout/${workout.id}/edit`} className="btn btn-ghost text-sm">
+              Edit
+            </Link>
+            <Link href="/history" className="btn btn-ghost text-sm">
+              ← History
+            </Link>
+          </div>
         }
       />
 

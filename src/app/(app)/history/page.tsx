@@ -16,7 +16,7 @@ export default async function HistoryPage() {
   const userId = user!.id;
 
   const [workouts, profile] = await Promise.all([
-    getWorkouts(supabase, userId),
+    getWorkouts(supabase, userId, 200),
     getProfile(supabase, userId),
   ]);
   const units = profile?.units ?? "lb";

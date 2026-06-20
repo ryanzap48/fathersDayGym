@@ -9,13 +9,27 @@
 :root {
   --background: #fcfcfb;
   --foreground: #18181b;
-  --muted: #71717a;
-  --faint: #a1a1aa;
+  --muted: #6b6b73;
+  --faint: #74747c;
   --divider: #e8e8e4;
   --accent: #e2502c;
   --accent-weak: #fbe9e3;
   --good: #2f7d54;
   --bad: #c0392b;
+}
+
+/* Manual dark theme — toggled by a `.dark` class on <html>. All UI reads
+   these variables, so overriding them here recolors the whole app. */
+.dark {
+  --background: #0e0e10;
+  --foreground: #f4f4f5;
+  --muted: #a1a1aa;
+  --faint: #8b8b93;
+  --divider: #27272a;
+  --accent: #ff6b47;
+  --accent-weak: #2a1813;
+  --good: #4caf7d;
+  --bad: #f1786b;
 }
 
 @theme inline {
@@ -95,8 +109,12 @@ body {
   border-bottom: 1px solid var(--divider);
   text-align: center;
   font-variant-numeric: tabular-nums;
-  padding: 0.25rem 0;
+  /* 16px minimum prevents iOS Safari from auto-zooming on focus. */
+  font-size: 16px;
+  padding: 0.5rem 0;
+  min-height: 44px;
   width: 100%;
+  color: var(--foreground);
 }
 .cell-input:focus {
   outline: none;
@@ -152,6 +170,14 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* Respect the iPhone home indicator / notch for fixed bottom UI. */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pb-safe-nav {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 }
 
 @media (prefers-reduced-motion: reduce) {

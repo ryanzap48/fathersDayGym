@@ -110,6 +110,20 @@ export function toSetRecords(workouts: WorkoutDetail[]): SetRecord[] {
   return records;
 }
 
+/**
+ * Just the workout timestamps — a tiny payload for streaks, counts, and the
+ * calendar heatmap, so those don't have to hydrate every set on mobile data.
+ */
+export async function getWorkoutDates(supabase: DB, userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("workouts")
+    .select("started_at")
+    .eq("user_id", userId)
+    .order("started_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((w) => w.started_at);
+}
+
 /** Profile row for the current user, creating sensible fallbacks upstream. */
 export async function getProfile(supabase: DB, userId: string) {
   const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
