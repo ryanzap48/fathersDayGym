@@ -12,17 +12,18 @@ function apply(theme: Theme) {
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("system");
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    const saved = (localStorage.getItem("theme") as Theme | null) ?? "system";
+    const saved = (localStorage.getItem("theme") as Theme | null) ?? "light";
     setTheme(saved);
   }, []);
 
   function choose(next: Theme) {
     setTheme(next);
-    if (next === "system") localStorage.removeItem("theme");
-    else localStorage.setItem("theme", next);
+    // Store all choices (including "system") so the pre-paint script in the
+    // root layout can honor them; absence of a value defaults to light.
+    localStorage.setItem("theme", next);
     apply(next);
   }
 
